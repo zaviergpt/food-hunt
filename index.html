@@ -82,6 +82,7 @@
             </li>
         </ul>
         <div class="container">
+            <div id="map"></div>
         </div>
     </body>
     <script>
@@ -99,7 +100,6 @@
                         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18 }).addTo(map)
                     }
                     previous = latest
-                    document.getElementsByClassName("container")[0].textContent = position.coords
                 }, (error) => console.error(error), { enablehighAccuracy: true, maximumAge: 1000, timeout: 5000 })
             } else alert("not supported.")
         })
