@@ -93,16 +93,12 @@
         window.addEventListener("load", () => {
             if (navigator.geolocation) {
                 previous = null
-                map = null
+                map = L.map("map").setView([0, 0], 15)
+                L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18 }).addTo(map)
                 navigator.geolocation.watchPosition(function(position){
                     let { latitude, longitude } = position.coords
                     latest = L.latLng(latitude, longitude)
-                    if (previous) {
-                        map.setView(latest, map.getZoom())
-                    } else {
-                        map = L.map("map").setView([latitude, longitude], 15)
-                        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18 }).addTo(map)
-                    }
+                    map.setView(latest, map.getZoom())
                     previous = latest
                 }, (error) => console.error(error), { enablehighAccuracy: true, maximumAge: 1000, timeout: 5000 })
             } else alert("not supported.")
