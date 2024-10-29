@@ -87,7 +87,8 @@
         window.addEventListener("load", () => {
             if (navigator.geolocation) {
                 navigator.geolocation.watchPosition(function(position){
-                    document.getElementsByClassName("container")[0].textContent = position.coords
+                    const { latitude, longitude } = position.coords
+                    document.getElementsByClassName("container")[0].textContent = `${latitude}, ${longitude}`
                 }, (error) => console.error(error), { enablehighAccuracy: true, maximumAge: 1000, timeout: 5000 })
             } else alert("not supported.")
         })
