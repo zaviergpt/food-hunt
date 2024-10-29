@@ -4,6 +4,7 @@
         <title></title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
+        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Gaegu&display=swap');
             * {
@@ -86,9 +87,19 @@
     <script>
         window.addEventListener("load", () => {
             if (navigator.geolocation) {
+                previous = null
+                map = null
                 navigator.geolocation.watchPosition(function(position){
-                    const { latitude, longitude } = position.coords
-                    document.getElementsByClassName("container")[0].textContent = `${latitude}, ${longitude}`
+                    let { latitude, longitude } = position.coords
+                    latest = L.latLng(latitude, longitude)
+                    if (previous) {
+                        map.setView(latest, map.getZoom())
+                    } else {
+                        map = L.map("map").setView([latitude, lpngitude], 15)
+                        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18 }).addTo(map)
+                    }
+                    previous = latest
+                    document.getElementsByClassName("container")[0].textContent = position.coords
                 }, (error) => console.error(error), { enablehighAccuracy: true, maximumAge: 1000, timeout: 5000 })
             } else alert("not supported.")
         })
