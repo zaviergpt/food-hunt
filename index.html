@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step and Walk Tracker</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 100vh;
+            width: 100vw;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Initialize the map
+        const map = L.map('map').setView([51.505, -0.09], 15); // Default to a view if GPS not available
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Initialize path tracking variables
+        let pathCoordinates = [];
+        let pathPolyline = L.polyline(pathCoordinates, { color: 'blue', weight: 4 }).addTo(map);
+
+        // Auto pan and zoom function
+        function autoPanAndZoom() {
+            const bounds = pathPolyline.getBounds();
+            map.fitBounds(bounds, { padding: [20, 20] });
+        }
+
+        // Track user location
+        function trackLocation(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+
+            // Add the new coordinates to path
+            pathCoordinates.push([lat, lng]);
+            pathPolyline.setLatLngs(pathCoordinates);
+
+            // Auto pan and zoom to keep path in view
+            autoPanAndZoom();
+        }
+
+        // Error handler for geolocation
+        function locationError(error) {
+            console.error(`Geolocation error: ${error.message}`);
+            alert("Failed to get location. Please enable GPS.");
+        }
+
+        // Request location updates
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(trackLocation, locationError, {
+                enableHighAccuracy: true,
+                maximumAge: 0,
+                timeout: 10000
+            });
+        } else {
+            alert("Geolocation is not supported by your browser.");
+        }
+    </script>
+</body>
+</html>
