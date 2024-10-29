@@ -1,111 +1,95 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Step Tracking with OpenStreetMap</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-  <style>
-    * {
-        border: 0;
-        padding: 0;
-        margin: 0;
-    }
-    #map { height: 100vh; width: 100vw; }
-    #stats {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: white;
-      padding: 10px;
-      z-index: 1000;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      font-family: Arial, sans-serif;
-    }
-  </style>
-</head>
-<body>
-  <div id="stats">
-    <p>Steps: <span id="steps">0</span></p>
-    <p>Distance: <span id="distance">0</span> meters</p>
-  </div>
-  <div id="map"></div>
-
-  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-  <script>
-    // Initialize variables
-    let map;
-    let userPath = [];
-    let totalDistance = 0;
-    let steps = 0;
-    const stepLength = 0.75; // approximate step length in meters
-
-    // Function to calculate distance between two coordinates
-    function calculateDistance(lat1, lon1, lat2, lon2) {
-      const R = 6371e3; // Earth's radius in meters
-      const phi1 = lat1 * Math.PI / 180;
-      const phi2 = lat2 * Math.PI / 180;
-      const deltaPhi = (lat2 - lat1) * Math.PI / 180;
-      const deltaLambda = (lon2 - lon1) * Math.PI / 180;
-
-      const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
-                Math.cos(phi1) * Math.cos(phi2) *
-                Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c; // Distance in meters
-    }
-
-    // Initialize Map
-    function initMap() {
-      map = L.map('map').setView([0, 0], 13);
-
-      // Add OpenStreetMap tile layer
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map);
-
-      // Start tracking user position
-      if (navigator.geolocation) {
-        navigator.geolocation.watchPosition(onLocationFound, onLocationError, { enableHighAccuracy: true });
-      } else {
-        alert("Geolocation is not supported by this browser.");
-      }
-    }
-
-    // Handle user's location updates
-    function onLocationFound(position) {
-      const { latitude, longitude } = position.coords;
-
-      // If this is the first position, just center the map
-      if (userPath.length === 0) {
-        map.setView([latitude, longitude], 16);
-      } else {
-        // Calculate distance from last point
-        const lastPoint = userPath[userPath.length - 1];
-        const distance = calculateDistance(lastPoint.lat, lastPoint.lng, latitude, longitude);
-        totalDistance += distance;
-
-        // Estimate steps based on distance
-        steps += Math.floor(distance / stepLength);
-
-        // Update stats
-        document.getElementById('steps').innerText = steps;
-        document.getElementById('distance').innerText = totalDistance.toFixed(2);
-      }
-
-      // Update path and add a marker
-      userPath.push({ lat: latitude, lng: longitude });
-      L.polyline(userPath, { color: 'blue' }).addTo(map);
-      L.marker([latitude, longitude]).addTo(map);
-    }
-
-    // Handle location errors
-    function onLocationError(error) {
-      alert(`Error: ${error.message}`);
-    }
-
-    // Initialize the map on page load
-    document.addEventListener("DOMContentLoaded", initMap);
-  </script>
-</body>
+<html>
+    <head>
+        <title></title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Gaegu&display=swap');
+            * {
+                border: 0;
+                padding: 0;
+                margin: 0;
+                outline: none;
+                user-select: none;
+                font-family: "Gaegu", sans-serif;
+            }
+            body {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+            }
+            .navigation {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                list-style-type: none;
+                padding: 15px 0px;
+            }
+            .navigation li {
+                height: calc(70px - (15px * 2));
+                margin: 0px 15px;
+            }
+            .navigation li.logo {
+                width: 100%;
+                text-align: center;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .navigation li.logo h1 {
+                font-weight: 700;
+                font-size: 30px;
+                line-height: calc(30px/1.5);
+                letter-spacing: calc(-30px/20);
+            }
+            .navigation li button {
+                height: 100%;
+                aspect-ratio: 1;
+                font-size: 112.5%;
+                background-color: transparent;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .navigation li button#navigation-profile {
+                border-radius: 50%;
+                box-shadow: 0px 0px 2.5px rgba(0, 0, 0, 0.125);
+            }
+            .container {
+                position: relative;
+                height: calc(100% - 70px - 15px - 2.5px);
+                box-shadow: 0px 0px 2.5px rgba(0, 0, 0, 0.125);
+                margin: 0px 15px;
+                margin-top: 2.5px;
+                border-radius: calc(15px/1.5);
+            }
+        </style>
+    </head>
+    <body>
+        <ul class="navigation">
+            <li>
+                <button><i class="fa-solid fa-magnifying-glass"></i></button>
+            </li>
+            <li class="logo">
+                <h1>food hunt</h1>
+            </li>
+            <li>
+                <button id="navigation-profile"></button>
+            </li>
+        </ul>
+        <div class="container">
+        </div>
+    </body>
+    <script>
+        window.addEventListener("load", () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(function(position){
+                    document.getElementsByClassName("container")[0].textContent = position.coords
+                }, (error) => console.error(error), { enablehighAccuracy: true, maximumAge: 1000, timeout: 5000 })
+            } else alert("not supported.")
+        })
+    </script>
 </html>
