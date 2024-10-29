@@ -1,68 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Step and Walk Tracker</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <style>
-        #map {
-            height: 100vh;
-            width: 100vw;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step Tracking with OpenStreetMap</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <style>
+    * {
+        border: 0;
+        padding: 0;
+        margin: 0;
+    }
+    #map { height: 100vh; width: 100vw; }
+    #stats {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: white;
+      padding: 10px;
+      z-index: 1000;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      font-family: Arial, sans-serif;
+    }
+  </style>
 </head>
 <body>
-    <div id="map"></div>
+  <div id="stats">
+    <p>Steps: <span id="steps">0</span></p>
+    <p>Distance: <span id="distance">0</span> meters</p>
+  </div>
+  <div id="map"></div>
 
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script>
-        // Initialize the map
-        const map = L.map('map').setView([51.505, -0.09], 15); // Default to a view if GPS not available
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script>
+    // Initialize variables
+    let map;
+    let userPath = [];
+    let totalDistance = 0;
+    let steps = 0;
+    const stepLength = 0.75; // approximate step length in meters
 
-        // Initialize path tracking variables
-        let pathCoordinates = [];
-        let pathPolyline = L.polyline(pathCoordinates, { color: 'blue', weight: 4 }).addTo(map);
+    // Function to calculate distance between two coordinates
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371e3; // Earth's radius in meters
+      const phi1 = lat1 * Math.PI / 180;
+      const phi2 = lat2 * Math.PI / 180;
+      const deltaPhi = (lat2 - lat1) * Math.PI / 180;
+      const deltaLambda = (lon2 - lon1) * Math.PI / 180;
 
-        // Auto pan and zoom function
-        function autoPanAndZoom() {
-            const bounds = pathPolyline.getBounds();
-            map.fitBounds(bounds, { padding: [20, 20] });
-        }
+      const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+                Math.cos(phi1) * Math.cos(phi2) *
+                Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c; // Distance in meters
+    }
 
-        // Track user location
-        function trackLocation(position) {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
+    // Initialize Map
+    function initMap() {
+      map = L.map('map').setView([0, 0], 13);
 
-            // Add the new coordinates to path
-            pathCoordinates.push([lat, lng]);
-            pathPolyline.setLatLngs(pathCoordinates);
+      // Add OpenStreetMap tile layer
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
 
-            // Auto pan and zoom to keep path in view
-            autoPanAndZoom();
-        }
+      // Start tracking user position
+      if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(onLocationFound, onLocationError, { enableHighAccuracy: true });
+      } else {
+        alert("Geolocation is not supported by this browser.");
+      }
+    }
 
-        // Error handler for geolocation
-        function locationError(error) {
-            console.error(`Geolocation error: ${error.message}`);
-            alert("Failed to get location. Please enable GPS.");
-        }
+    // Handle user's location updates
+    function onLocationFound(position) {
+      const { latitude, longitude } = position.coords;
 
-        // Request location updates
-        if (navigator.geolocation) {
-            navigator.geolocation.watchPosition(trackLocation, locationError, {
-                enableHighAccuracy: true,
-                maximumAge: 0,
-                timeout: 10000
-            });
-        } else {
-            alert("Geolocation is not supported by your browser.");
-        }
-    </script>
+      // If this is the first position, just center the map
+      if (userPath.length === 0) {
+        map.setView([latitude, longitude], 16);
+      } else {
+        // Calculate distance from last point
+        const lastPoint = userPath[userPath.length - 1];
+        const distance = calculateDistance(lastPoint.lat, lastPoint.lng, latitude, longitude);
+        totalDistance += distance;
+
+        // Estimate steps based on distance
+        steps += Math.floor(distance / stepLength);
+
+        // Update stats
+        document.getElementById('steps').innerText = steps;
+        document.getElementById('distance').innerText = totalDistance.toFixed(2);
+      }
+
+      // Update path and add a marker
+      userPath.push({ lat: latitude, lng: longitude });
+      L.polyline(userPath, { color: 'blue' }).addTo(map);
+      L.marker([latitude, longitude]).addTo(map);
+    }
+
+    // Handle location errors
+    function onLocationError(error) {
+      alert(`Error: ${error.message}`);
+    }
+
+    // Initialize the map on page load
+    document.addEventListener("DOMContentLoaded", initMap);
+  </script>
 </body>
 </html>
