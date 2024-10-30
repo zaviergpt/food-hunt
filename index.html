@@ -244,14 +244,15 @@
                 latest = null
                 map = null
                 distance = 0
-                destination = { lat: 1.309846, lng: 103.8559807 }
+                walkingOnly = true
+                destination = { lat: 1.4625025, lng: 103.7632889 }
                 navigator.geolocation.watchPosition(function(position){
                     let { latitude, longitude } = position.coords
                     latest = [L.latLng(latitude, longitude), [latitude, longitude]]
                     if (previous) {
                         latestDistance = latest[0].distanceTo(previous[0])
                         speed = latestDistance/((Date.now() - previous[1])/1000)
-                        if (speed < 12 && speed > 0.75) {
+                        if (((walkingOnly && speed < 12)||(speed < 100)) && speed > 0.75) {
                             distance += latestDistance
                             actions.info.speed.textContent = speed.toFixed(2) + "m/s"
                             if (distance > 1000) {
