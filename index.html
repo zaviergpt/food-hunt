@@ -24,6 +24,7 @@
                 right: 0;
                 bottom: 0;
                 font-weight: 300;
+                color: #222222;
             }
             .navigation, .actions {
                 display: flex;
@@ -72,8 +73,11 @@
                 overflow: hidden;
             }
             .container .tab {
-                width: 100%;
-                height: 100%;
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
                 display: none;
             }
             .container .tab #map {
@@ -85,9 +89,9 @@
                 position: absolute;
                 bottom: 15px;
                 left: 15px;
-                padding: 5px;
                 background-color: #FFFFFF;
-                width: 50px;
+                font-size: 125%;
+                width: 60px;
                 aspect-ratio: 1;
                 border-radius: 50%;
                 box-shadow: 0px 0px 2.5px rgba(0, 0, 0, 0.125);
@@ -95,15 +99,17 @@
                 align-items: center;
                 justify-content: center;
             }
+            .container .tab#compass-tab {
+                background-color: #222222;
+                color: #FFFFFF;
+            }
             .container .tab#compass-tab #compass-distance {
                 text-align: center;
                 font-size: 30px;
-                margin-top: 15px;
             }
             .container .tab#compass-tab .frame {
                 width: 100%;
                 aspect-ratio: 1;
-                border: 3.75px solid #000000;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -115,8 +121,7 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 360%;
-                margin: 15px 0px;
+                font-size: calc(360% * 2.5);
             }
             .actions li {
                 text-align: center;
@@ -150,11 +155,11 @@
         <ul class="container">
             <li class="tab" id="map-tab">
                 <div id="map"></div>
-                <div class="overlay" id="map-overlay-direction">
+                <button class="overlay" id="map-overlay-direction">
                     <div id="map-overlay-direction-pointer" style="transform-origin: center; font-size: 150%">
                         <i class="fa-solid fa-arrow-up"></i>
                     </div>
-                </div>
+                </button>
             </li>
             <li class="tab" id="compass-tab">
                 <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50%">
@@ -232,14 +237,14 @@
                     Math.cos(phi) * Math.tan(phiK) -
                         Math.sin(phi) * Math.cos(lambdaK - lambda)
                     )
-                return Math.round(psi)
+                return (Math.round(psi) + 360) % 360
             }
             if (navigator.geolocation && window.DeviceOrientationEvent) {
                 previous = null
                 latest = null
                 map = null
                 distance = 0
-                destination = { lat: 1.3114177, lng: 103.8559662 }
+                destination = { lat: 1.309846, lng: 103.8559807 }
                 navigator.geolocation.watchPosition(function(position){
                     let { latitude, longitude } = position.coords
                     latest = [L.latLng(latitude, longitude), [latitude, longitude]]
@@ -252,13 +257,13 @@
                             if (distance > 1000) {
                                 actions.info.distance.textContent = (distance/1000).toFixed(2) + "km"
                             } else {
-                                actions.info.distance.textContent = distance.toFixed(2) + "m"
+                                actions.info.distance.textContent = Math.round(distance) + "m"
                             }
                             if (container.active === "map") map.setView(latest[0], map.getZoom())
                         } else {
                             actions.info.speed.textContent = (0).toFixed(2) + "m/s"
                         }
-                        container.compass[0].distance.textContent = Math.round(latest[0].distanceTo(L.latLng(destination.lat, destination.lng))) + "m"
+                        if (container.active === "compass") container.compass[0].distance.textContent = Math.round(latest[0].distanceTo(L.latLng(destination.lat, destination.lng))) + "m"
                     } else if (container.active === "map") {
                         map = L.map("map").setView([latitude, longitude], 20)
                         L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{
@@ -266,14 +271,15 @@
                             subdomains:['mt0','mt1','mt2','mt3']
                         }).addTo(map)
                         actions.info.country.textContent = "Singapore"
+                        container.map.overlay.direction[1].onclick = function() { selectTab("compass") }
                     }
                     previous = [latest[0], Date.now()]
                 }, (error) => console.error(error), { enableHighAccuracy: true, maximumAge: 1000, timeout: 5000 })
                 window.addEventListener("deviceorientationabsolute", (event) => {
-                    if (latest) {
+                    if (latest && previous) {
                         compass = event.webkitCompassHeading || Math.abs(event.alpha - 360)
                         toPoint = calcDegreeToPoint(latest[1][0], latest[1][1], destination)
-                        accuracy = (1 - (((toPoint - compass) < 0 ? 0 - (toPoint - compass) : (toPoint - compass))/15))
+                        accuracy = (1 - (((toPoint - compass) < 0 ? 0 - (toPoint - compass) : (toPoint - compass))/(360/8)))
                         if (container.active === "map") {
                             if (accuracy > 0) {
                                 container.map.overlay.direction[0].pointer.style.color = "#FFFFFF"
@@ -285,21 +291,15 @@
                             container.map.overlay.direction[0].pointer.style.transform = `rotate(${toPoint - compass}deg)`
                         } else if (container.active === "compass") {
                             if (accuracy > 0) {
-                                container.compass[0].pointer.parentElement.style.border = "3.75px solid #FFFFFF"
-                                container.compass[0].pointer.style.color = "#FFFFFF"
-                                container.compass[1].style.backgroundColor = "#2ECC71"
-                                container.compass[0].distance.style.color = "#FFFFFF"
+                                container.compass[0].pointer.style.color = "#2ECC71"
                             } else {
-                                container.compass[0].pointer.parentElement.style.border = "3.75px solid #000000"
-                                container.compass[0].pointer.style.color = "#000000"
-                                container.compass[1].style.backgroundColor = "#FFFFFF"
-                                container.compass[0].distance.style.color = "#000000"
+                                container.compass[0].pointer.style.color = "#FFFFFF"
                             }
                             container.compass[0].pointer.style.transform = `rotate(${toPoint - compass}deg)`
                         }
                     }
                 }, true)
-                selectTab("compass")
+                selectTab("map")
             } else alert("not supported.")
         })
     </script>
