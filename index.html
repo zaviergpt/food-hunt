@@ -101,7 +101,7 @@
                     if (previous) {
                         map.setView(latest, map.getZoom())
                     } else {
-                        map = L.map("map").setView([latitude, longitude], 15)
+                        map = L.map("map").setView([latitude, longitude], 18)
                         L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18 }).addTo(map)
                     }
                     previous = latest
