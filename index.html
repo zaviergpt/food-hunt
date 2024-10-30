@@ -4,6 +4,7 @@
         <title></title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
         <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Gaegu&display=swap');
@@ -69,7 +70,7 @@
             }
             .container #map {
                 width: 100%;
-                height: 100%;
+                aspect-ratio: 1;
             }
         </style>
     </head>
@@ -93,12 +94,16 @@
         window.addEventListener("load", () => {
             if (navigator.geolocation) {
                 previous = null
-                map = L.map("map").setView([0, 0], 15)
-                L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18 }).addTo(map)
+                map = null
                 navigator.geolocation.watchPosition(function(position){
                     let { latitude, longitude } = position.coords
                     latest = L.latLng(latitude, longitude)
-                    map.setView(latest, map.getZoom())
+                    if (previous) {
+                        map.setView(latest, map.getZoom())
+                    } else {
+                        map = L.map("map").setView([latitude, longitude], 15)
+                        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18 }).addTo(map)
+                    }
                     previous = latest
                 }, (error) => console.error(error), { enablehighAccuracy: true, maximumAge: 1000, timeout: 5000 })
             } else alert("not supported.")
