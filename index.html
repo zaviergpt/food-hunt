@@ -275,6 +275,7 @@
                         container.map.overlay.direction[1].onclick = function() { selectTab("compass") }
                     }
                     previous = [latest[0], Date.now()]
+                    actions.info.country.textContent = `${latitude}, ${longitude}`
                 }, (error) => console.error(error), { enableHighAccuracy: true, maximumAge: 1000, timeout: 5000 })
                 window.addEventListener("deviceorientationabsolute", (event) => {
                     if (latest && previous) {
